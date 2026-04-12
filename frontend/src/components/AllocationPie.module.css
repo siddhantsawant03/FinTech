@@ -1,0 +1,38 @@
+.wrap {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+}
+.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.title { font-family: var(--font-display); font-size: 13px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.08em; }
+.toggle { display: flex; gap: 4px; background: var(--bg-2); border-radius: var(--radius-sm); padding: 3px; }
+.toggleBtn { padding: 4px 12px; border-radius: 4px; border: none; background: transparent; color: var(--text-muted); font-size: 12px; cursor: pointer; font-family: var(--font-body); transition: all 0.15s; }
+.toggleActive { background: var(--bg-3); color: var(--gold); }
+
+.chartWrap { position: relative; }
+.center {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  pointer-events: none;
+}
+.centerVal { font-family: var(--font-mono); font-size: 28px; font-weight: 500; color: var(--text-primary); }
+.centerLabel { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+.legend { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
+.legendItem { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 4px 6px; border-radius: 4px; transition: background 0.15s; }
+.legendItem:hover { background: var(--bg-2); }
+.legendDot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.legendLabel { font-size: 12px; color: var(--text-secondary); flex: 1; }
+.legendVal { font-family: var(--font-mono); font-size: 12px; color: var(--text-primary); }
+
+.tooltip {
+  background: var(--bg-1);
+  border: 1px solid var(--border-accent);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+}
+.tooltipLabel { font-size: 12px; color: var(--text-secondary); }
+.tooltipValue { font-family: var(--font-mono); font-size: 18px; color: var(--gold); }

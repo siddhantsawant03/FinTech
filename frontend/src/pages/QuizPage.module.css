@@ -1,0 +1,233 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  position: relative;
+}
+
+.bg {
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 0%, rgba(212,175,55,0.06) 0%, transparent 70%),
+    linear-gradient(rgba(212,175,55,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(212,175,55,0.03) 1px, transparent 1px);
+  background-size: auto, 48px 48px, 48px 48px;
+  pointer-events: none;
+}
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  min-height: 100vh;
+  justify-content: center;
+  color: var(--text-secondary);
+}
+
+.container {
+  width: 100%;
+  max-width: 580px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.topBar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.backBtn {
+  padding: 8px 14px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+  font-family: var(--font-body);
+}
+.backBtn:hover { border-color: var(--gold); color: var(--gold); }
+
+.progressWrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.progressBar {
+  flex: 1;
+  height: 4px;
+  background: var(--bg-3);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.progressFill {
+  height: 100%;
+  background: var(--gold);
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+.progressText { font-size: 12px; color: var(--text-muted); white-space: nowrap; font-family: var(--font-mono); }
+
+.liveRisk {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid;
+  white-space: nowrap;
+  transition: all 0.3s;
+}
+.liveDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  animation: pulse-gold 2s infinite;
+}
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 40px;
+  animation: fadeInUp 0.4s ease;
+  transition: opacity 0.2s, transform 0.2s;
+}
+.cardExit { opacity: 0; transform: translateX(-20px); }
+
+.qNum {
+  font-size: 12px;
+  color: var(--gold);
+  font-family: var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.question {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.4;
+  margin-bottom: 32px;
+}
+
+.options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 32px; }
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--text-primary);
+  transition: all 0.15s;
+  position: relative;
+}
+.option:hover { border-color: var(--gold); background: var(--gold-dim); }
+.optionSelected { border-color: var(--gold) !important; background: var(--gold-dim) !important; color: var(--gold) !important; }
+
+.optionIndicator {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.optionSelected .optionIndicator { border-color: var(--gold); background: var(--gold); }
+
+.optionDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: transparent;
+  transition: all 0.15s;
+}
+.optionSelected .optionDot { background: #080c14; }
+
+.checkmark {
+  margin-left: auto;
+  font-size: 14px;
+  color: var(--gold);
+  flex-shrink: 0;
+}
+
+.nextBtn {
+  width: 100%;
+  padding: 14px;
+  background: var(--gold);
+  color: #080c14;
+  border: none;
+  border-radius: var(--radius);
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.nextBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+.nextBtn:hover:not(:disabled) { background: var(--gold-light); transform: translateY(-1px); }
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(8,12,20,0.3);
+  border-top-color: #080c14;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+.calibration {
+  padding: 20px 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  animation: fadeInUp 0.3s ease;
+}
+.calLabel { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; }
+.riskBar {
+  height: 6px;
+  background: var(--bg-3);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+.riskFill {
+  height: 100%;
+  background: linear-gradient(90deg, #22c55e, #d4af37, #ef4444);
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+.riskScale {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-muted);
+}

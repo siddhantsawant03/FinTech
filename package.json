@@ -1,0 +1,13 @@
+{
+  "name": "wealth-allocator-root",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "setup": "cd backend && npm install && cd ../frontend && npm install",
+    "dev": "concurrently --names \"BACKEND,FRONTEND\" --prefix-colors \"yellow,cyan\" \"cd backend && npm run dev\" \"cd frontend && npm run dev\"",
+    "start": "concurrently --names \"BACKEND,FRONTEND\" --prefix-colors \"yellow,cyan\" \"cd backend && npm start\" \"cd frontend && npm run preview\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
