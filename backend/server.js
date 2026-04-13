@@ -26,16 +26,33 @@ const logger = winston.createLogger({
 });
 
 // Middleware
+// app.use(helmet({ contentSecurityPolicy: false }));
+// app.use(
+//   cors({
+//     origin: [
+//       "http://localhost:5173",
+//       "http://localhost:3000",
+//       "https://fin-tech-roan.vercel.app",
+//     ],
+//   }),
+// );
+// app.use(express.json({ limit: "10mb" }));
 app.use(helmet({ contentSecurityPolicy: false }));
+
 app.use(
   cors({
     origin: [
       "http://localhost:5173",
       "http://localhost:3000",
-      " https://fin-tech-roan.vercel.app",
+      "https://fin-tech-roan.vercel.app",
     ],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    credentials: true,
   }),
 );
+
+app.options("*", cors());
+
 app.use(express.json({ limit: "10mb" }));
 
 // Rate limiting
