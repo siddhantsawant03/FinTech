@@ -1,8 +1,7 @@
 import { create } from "zustand";
 import axios from "axios";
 
-// const api = axios.create({ baseURL: '/api' });
-const api = axios.create({ baseURL: "https://wealthier-ft.onrender.com/api" });
+const api = axios.create({ baseURL: "/api" });
 
 // Add JWT to all requests
 api.interceptors.request.use((cfg) => {

@@ -1,0 +1,536 @@
+/* ─── Base ─────────────────────────────────────────────────────────────────── */
+.page {
+  min-height: 100vh;
+  background: #080e1f;
+  color: #e8eaf6;
+  font-family: "DM Sans", "Sora", system-ui, sans-serif;
+  padding: 32px 28px 60px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* ─── Header ────────────────────────────────────────────────────────────────── */
+.header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 40px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.title {
+  font-size: 2.1rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin: 0;
+  background: linear-gradient(135deg, #e8eaf6 0%, #8899bb 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.subtitle {
+  margin: 4px 0 0;
+  font-size: 0.82rem;
+  color: #5566aa;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.liveChip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 229, 160, 0.12);
+  border: 1px solid rgba(0, 229, 160, 0.3);
+  color: #00e5a0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  padding: 4px 12px;
+  border-radius: 999px;
+}
+
+.liveDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #00e5a0;
+  animation: pulse 1.6s infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.85);
+  }
+}
+
+.refreshBtn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #8899bb;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.refreshBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #e8eaf6;
+}
+
+.lastRefresh {
+  font-size: 0.75rem;
+  color: #3a4a6a;
+}
+
+/* ─── Section ───────────────────────────────────────────────────────────────── */
+.section {
+  margin-bottom: 40px;
+}
+
+.sectionTitle {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: #5566aa;
+  margin: 0 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sub {
+  font-size: 0.7rem;
+  color: #3a4a6a;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* ─── Index Cards ───────────────────────────────────────────────────────────── */
+.indexGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.indexCard {
+  background: #0d1628;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-top: 2px solid var(--accent, #00e5a0);
+  border-radius: 14px;
+  padding: 20px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.indexCard::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at top left,
+    rgba(0, 229, 160, 0.05),
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+.indexCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.indexTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.indexName {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #8899bb;
+  font-weight: 600;
+}
+
+.indexLtp {
+  font-size: 1.9rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.indexMeta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.indexNet {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.indexPE {
+  font-size: 0.72rem;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 2px 8px;
+  border-radius: 6px;
+  color: #8899bb;
+}
+
+.indexChange {
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.sparkRow {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.sparkPlaceholder {
+  width: 140px;
+  height: 48px;
+  background: #1a2236;
+  border-radius: 6px;
+}
+
+.hlBox {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  text-align: right;
+  font-size: 0.7rem;
+  color: #5566aa;
+  min-width: 80px;
+}
+
+.positive {
+  color: #00e5a0;
+}
+.negative {
+  color: #ff5f5f;
+}
+
+/* ─── Stats Grid ────────────────────────────────────────────────────────────── */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 14px;
+}
+
+.statCard {
+  background: #0d1628;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 14px;
+  padding: 18px 20px;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  transition: transform 0.2s;
+}
+.statCard:hover {
+  transform: translateY(-2px);
+}
+
+.statIcon {
+  font-size: 1.4rem;
+  line-height: 1;
+  margin-top: 2px;
+}
+
+.statBody {
+  flex: 1;
+}
+.statLabel {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #5566aa;
+  margin-bottom: 4px;
+}
+.statValue {
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--c, #e8eaf6);
+}
+.statSub {
+  font-size: 0.72rem;
+  color: #5566aa;
+  margin-top: 3px;
+}
+.statNote {
+  font-size: 0.68rem;
+  color: #3a4a6a;
+  margin-top: 4px;
+  font-style: italic;
+}
+
+/* ─── Flow Cards ────────────────────────────────────────────────────────────── */
+.flowGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.flowCard {
+  background: #0d1628;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 14px;
+  padding: 20px;
+}
+
+.flowHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+.flowLabel {
+  font-size: 0.78rem;
+  color: #8899bb;
+  font-weight: 600;
+}
+.flowNet {
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.flowBar {
+  display: flex;
+  height: 8px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #1a2236;
+  margin-bottom: 10px;
+}
+.flowBuy {
+  transition: width 0.8s ease;
+  border-radius: 999px 0 0 999px;
+}
+.flowSell {
+  background: #ff5f5f;
+  flex: 1;
+  border-radius: 0 999px 999px 0;
+  opacity: 0.7;
+}
+
+.flowFooter {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+}
+.flowBuyText {
+  color: #00e5a0;
+}
+.flowSellText {
+  color: #ff5f5f;
+}
+
+/* ─── Flow History Chart ────────────────────────────────────────────────────── */
+.flowHistoryCard {
+  background: #0d1628;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 14px;
+  padding: 22px;
+}
+
+.cardTitle {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #5566aa;
+  margin: 0 0 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.flowHistChart {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  height: 100px;
+  padding-bottom: 24px;
+  position: relative;
+}
+
+.flowHistCol {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  position: relative;
+}
+
+.flowHistBars {
+  display: flex;
+  gap: 3px;
+  align-items: flex-end;
+}
+
+.flowHistBar {
+  width: 12px;
+  border-radius: 3px 3px 0 0;
+  min-height: 4px;
+  transition: height 0.6s ease;
+}
+
+.flowHistDate {
+  font-size: 0.6rem;
+  color: #3a4a6a;
+  text-align: center;
+  position: absolute;
+  bottom: -22px;
+  white-space: nowrap;
+}
+
+.flowHistLegend {
+  display: flex;
+  gap: 18px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+  font-size: 0.72rem;
+  color: #8899bb;
+}
+
+/* ─── Breadth ───────────────────────────────────────────────────────────────── */
+.breadthCard {
+  background: #0d1628;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 14px;
+  padding: 22px;
+  display: inline-block;
+  min-width: 320px;
+}
+
+.breadthInner {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+.breadthLegend {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 0.78rem;
+  color: #8899bb;
+}
+.breadthLegend b {
+  color: #e8eaf6;
+  margin-left: 6px;
+}
+
+.dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+/* ─── Load / Error ──────────────────────────────────────────────────────────── */
+.loadState,
+.errorState {
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  color: #5566aa;
+  font-size: 0.9rem;
+}
+
+.pulseRing {
+  width: 48px;
+  height: 48px;
+  border: 3px solid rgba(0, 229, 160, 0.2);
+  border-top-color: #00e5a0;
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.errorIcon {
+  font-size: 2rem;
+}
+.retryBtn {
+  background: rgba(0, 229, 160, 0.1);
+  border: 1px solid rgba(0, 229, 160, 0.3);
+  color: #00e5a0;
+  padding: 8px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+}
+.retryBtn:hover {
+  background: rgba(0, 229, 160, 0.2);
+}
+
+/* ─── Footer ────────────────────────────────────────────────────────────────── */
+.footer {
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 0.72rem;
+  color: #3a4a6a;
+  line-height: 1.8;
+  text-align: center;
+}
+
+/* ─── Responsive ────────────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .page {
+    padding: 20px 16px 48px;
+  }
+  .title {
+    font-size: 1.5rem;
+  }
+  .indexLtp {
+    font-size: 1.4rem;
+  }
+  .breadthCard {
+    min-width: unset;
+    width: 100%;
+  }
+  .breadthInner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
