@@ -32,6 +32,10 @@ npm install
 # In /backend, create .env file:
 cp .env.example .env
 # Edit .env and fill in your ANGEL_ONE details
+
+# Optional: if frontend and backend are hosted on different domains,
+# create /frontend/.env from /frontend/.env.example and point it to the backend
+# e.g. VITE_API_URL=https://your-backend.example.com
 ```
 
 ### 3. Start the app

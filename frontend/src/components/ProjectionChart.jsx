@@ -1,5 +1,5 @@
 import React from 'react'
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 
 function buildChartData(projections, profile) {
   const { monthlySIP, lumpsumAmount, timeHorizon } = profile
@@ -7,14 +7,26 @@ function buildChartData(projections, profile) {
   const lump = parseInt(lumpsumAmount) || 0
   const years = parseInt(timeHorizon) || 10
   const data = []
+  const scenarioRates = Object.entries(projections || {}).reduce((acc, [scenario, values]) => {
+    acc[scenario] = (parseFloat(values?.blendedCAGR) || 0) / 100
+    return acc
+  }, {})
 
   for (let y = 0; y <= years; y++) {
     const invested = lump + sip * 12 * y
     const entry = { year: `Yr ${y}`, invested }
-    for (const [scenario, rates] of Object.entries({ conservative: 0.10, base: 0.13, optimistic: 0.16 })) {
-      const r = rates / 12
+    for (const [scenario, rate] of Object.entries(scenarioRates)) {
+      const r = rate / 12
       const n = y * 12
-      entry[scenario] = Math.round(lump * Math.pow(1 + rates, y) + (n > 0 ? sip * ((Math.pow(1 + r, n) - 1) / r) * (1 + r) : 0))
+      const sipFutureValue =
+        n > 0
+          ? r === 0
+            ? sip * n
+            : sip * ((Math.pow(1 + r, n) - 1) / r) * (1 + r)
+          : 0
+      entry[scenario] = Math.round(
+        lump * Math.pow(1 + rate, y) + sipFutureValue,
+      )
     }
     data.push(entry)
   }

@@ -14,7 +14,19 @@
 .header { display: flex; justify-content: space-between; align-items: flex-start; }
 .symbol { font-family: var(--font-display); font-size: 18px; font-weight: 800; color: var(--text-primary); }
 .name { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.scoreBadge {
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(212,175,55,0.12);
+  border: 1px solid rgba(212,175,55,0.22);
+  color: var(--gold);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+}
+.badges { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .sectorBadge { padding: 3px 9px; border-radius: 100px; font-size: 11px; font-weight: 500; border: 1px solid; white-space: nowrap; }
+.convictionBadge { padding: 3px 9px; border-radius: 100px; font-size: 11px; font-weight: 600; border: 1px solid; white-space: nowrap; }
 
 .priceRow { display: flex; align-items: baseline; gap: 10px; }
 .ltp { font-family: var(--font-mono); font-size: 24px; font-weight: 500; color: var(--text-primary); }
@@ -22,6 +34,27 @@
 .positive { color: var(--green); }
 .negative { color: var(--red); }
 .noPrice { font-size: 12px; color: var(--text-muted); }
+
+.insightGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.insight {
+  padding: 10px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.insightLabel {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-bottom: 5px;
+}
+.insightValue {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-primary);
+  font-weight: 500;
+}
 
 .rangeWrap { display: flex; flex-direction: column; gap: 6px; }
 .rangeLabel { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-muted); font-family: var(--font-mono); }
@@ -36,6 +69,34 @@
 .metricGood { color: var(--green); }
 .metricNeutral { color: var(--text-secondary); }
 
-.why { font-size: 11px; color: var(--text-muted); display: flex; gap: 6px; line-height: 1.5; }
-.whyIcon { color: var(--gold); flex-shrink: 0; }
+.highlights { display: flex; flex-wrap: wrap; gap: 6px; }
+.highlightChip {
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: rgba(79,166,255,0.12);
+  border: 1px solid rgba(79,166,255,0.18);
+  color: #8cc6ff;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.reasoning {
+  padding: 12px;
+  border-radius: var(--radius);
+  background: linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));
+  border: 1px solid var(--border);
+}
+.reasoningLabel {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+}
+.reasoningText { font-size: 12px; color: var(--text-secondary); line-height: 1.65; }
 .disclaimer { font-size: 10px; color: var(--text-muted); text-align: center; padding-top: 4px; border-top: 1px solid var(--border); }
+
+@media (max-width: 640px) {
+  .insightGrid { grid-template-columns: 1fr; }
+  .fundamentals { grid-template-columns: 1fr 1fr; }
+}
