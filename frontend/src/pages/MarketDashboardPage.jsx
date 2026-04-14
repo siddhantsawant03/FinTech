@@ -627,8 +627,6 @@ export default function MarketDashboardPage() {
   const goToStep = useStore((s) => s.goToStep);
 
   const [data, setData] = useState(null);
-  const [niftyCandles, setNiftyCandles] = useState([]);
-  const [sensexCandles, setSensexCandles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastRefresh, setLastRefresh] = useState(null);
@@ -641,18 +639,8 @@ export default function MarketDashboardPage() {
       return;
     }
     try {
-      const [marketRes, niftyRes, sensexRes] = await Promise.all([
-        api.get("/dashboard/market"),
-        api.get(
-          "/dashboard/candles/99926000?interval=FIVE_MINUTE&exchange=NSE",
-        ),
-        api.get(
-          "/dashboard/candles/99919000?interval=FIVE_MINUTE&exchange=BSE",
-        ),
-      ]);
+      const marketRes = await api.get("/dashboard/market");
       setData(marketRes.data.data);
-      setNiftyCandles(niftyRes.data.candles || []);
-      setSensexCandles(sensexRes.data.candles || []);
       setLastRefresh(new Date());
       setError(null);
     } catch (e) {
@@ -669,10 +657,14 @@ export default function MarketDashboardPage() {
   }, [fetchData]);
 
   const indices = data?.indices || {};
+  const charts = data?.charts || {};
   const fiiDii = data?.fiiDii || {};
   const usdInr = data?.usdInr || {};
+  const gold = data?.gold || {};
+  const volatility = data?.volatility || {};
   const repoRate = data?.repoRate || {};
   const breadth = data?.breadth || {};
+  const macro = data?.macro || {};
 
   if (loading)
     return (
@@ -747,7 +739,7 @@ export default function MarketDashboardPage() {
             pb={indices.nifty?.niftyPB}
             high={indices.nifty?.high}
             low={indices.nifty?.low}
-            spark={niftyCandles}
+            spark={charts.nifty}
             accent="#00e5a0"
           />
           <IndexCard
@@ -759,7 +751,7 @@ export default function MarketDashboardPage() {
             pb={indices.sensex?.sensexPB}
             high={indices.sensex?.high}
             low={indices.sensex?.low}
-            spark={sensexCandles}
+            spark={charts.sensex}
             accent="#4fa6ff"
           />
           <IndexCard
@@ -787,29 +779,95 @@ export default function MarketDashboardPage() {
             label="USD / INR"
             color="#ffd166"
             value={usdInr.rate ? `₹ ${usdInr.rate}` : "—"}
-            sub="Live forex rate"
+            sub={
+              usdInr.avg30d
+                ? `30D avg ${usdInr.avg30d} · ${formatMacroDelta(
+                    usdInr.vs30dAvgPct,
+                  )}`
+                : "Live forex rate"
+            }
           />
           <StatCard
-            icon="🏦"
-            label="RBI Repo Rate"
-            color="#4fa6ff"
-            value={repoRate.rate ? `${repoRate.rate}%` : "—"}
-            sub={`Updated ${repoRate.lastUpdated || "—"}`}
-            note={repoRate.note}
+            icon="🪙"
+            label="Gold (Est. INR / 10g)"
+            color="#f59e0b"
+            value={gold.price10gInr ? `₹ ${gold.price10gInr.toLocaleString("en-IN")}` : "—"}
+            sub={
+              gold.avg30d10gInr
+                ? `30D avg ₹ ${gold.avg30d10gInr.toLocaleString("en-IN")} · ${formatMacroDelta(
+                    gold.vs30dAvgPct,
+                  )}`
+                : "Derived from global gold futures"
+            }
+          />
+          <StatCard
+            icon="🌪️"
+            label="India VIX"
+            color="#ef4444"
+            value={volatility.indiaVix?.ltp ?? "—"}
+            sub={
+              volatility.indiaVix?.avg30d
+                ? `30D avg ${volatility.indiaVix.avg30d} · ${formatMacroDelta(
+                    volatility.indiaVix.vs30dAvgPct,
+                  )}`
+                : "Volatility index"
+            }
           />
           <StatCard
             icon="📊"
             label="Nifty P/E"
             color="#00e5a0"
             value={indices.nifty?.niftyPE ?? "—"}
-            sub={`P/B: ${indices.nifty?.niftyPB ?? "—"}`}
+            sub={`P/B: ${indices.nifty?.niftyPB ?? "—"} · DY: ${indices.nifty?.niftyDiv ?? "—"}%`}
           />
           <StatCard
             icon="📈"
-            label="Sensex P/E"
+            label="Nifty vs 30D Avg"
+            color="#4fa6ff"
+            value={
+              indices.nifty?.avg30d
+                ? `${formatMacroDelta(indices.nifty.vs30dAvgPct)}`
+                : "—"
+            }
+            sub={
+              indices.nifty?.avg30d
+                ? `30D avg ${Number(indices.nifty.avg30d).toLocaleString("en-IN", {
+                    maximumFractionDigits: 0,
+                  })}`
+                : "Trend unavailable"
+            }
+          />
+          <StatCard
+            icon="🏦"
+            label="RBI Repo Rate"
             color="#b48aff"
-            value={indices.sensex?.sensexPE ?? "—"}
-            sub={`P/B: ${indices.sensex?.sensexPB ?? "—"}`}
+            value={repoRate.rate ? `${repoRate.rate}%` : "—"}
+            sub={
+              repoRate.lastUpdated
+                ? `Updated ${repoRate.lastUpdated}`
+                : `Source ${repoRate.source || "RBI"}`
+            }
+            note={repoRate.note}
+          />
+        </div>
+      </section>
+
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>Macro Regime</h2>
+        <div className={styles.statsGrid}>
+          <StatCard
+            icon={macro.stance === "risk_on" ? "🟢" : macro.stance === "risk_off" ? "🔴" : "🟡"}
+            label="Regime"
+            color={
+              macro.stance === "risk_on"
+                ? "#22c55e"
+                : macro.stance === "risk_off"
+                ? "#ef4444"
+                : "#ffd166"
+            }
+            value={formatRegimeLabel(macro.stance)}
+            sub={Number.isFinite(macro.score) ? `Score ${macro.score}` : "Score unavailable"}
+            note={macro.drivers?.slice(0, 2).join(" · ") || "Awaiting macro inputs"}
           />
         </div>
       </section>
@@ -836,6 +894,11 @@ export default function MarketDashboardPage() {
           />
         </div>
         <FlowHistory history={fiiDii.history || []} />
+        {fiiDii.unavailable && (
+          <div className={styles.footer}>
+            FII/DII feed unavailable from NSE at the moment. Other macro inputs are still live.
+          </div>
+        )}
       </section>
 
       <section className={styles.section}>
@@ -853,4 +916,18 @@ export default function MarketDashboardPage() {
       </div>
     </div>
   );
+}
+
+function formatMacroDelta(value) {
+  if (value === null || value === undefined || Number.isNaN(Number(value))) {
+    return "—";
+  }
+  const parsed = Number(value);
+  return `${parsed >= 0 ? "+" : ""}${parsed.toFixed(2)}%`;
+}
+
+function formatRegimeLabel(value) {
+  if (value === "risk_on") return "Risk On";
+  if (value === "risk_off") return "Risk Off";
+  return "Neutral";
 }

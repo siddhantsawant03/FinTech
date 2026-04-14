@@ -1682,36 +1682,170 @@ function applyTacticalOverlay(allocation, marketData) {
   const result = { ...allocation };
   const signals = [];
   if (!marketData) return { allocation: result, signals };
-  const niftyPE = marketData.niftyPE;
-  if (niftyPE > 24) {
-    result.equity = Math.max(result.equity - 5, 10);
-    result.cash = Math.min(result.cash + 5, 20);
-    signals.push({
-      type: "warning",
-      message: `Nifty P/E at ${niftyPE}x — elevated valuations. SIP preferred over lumpsum.`,
-    });
-  } else if (niftyPE < 18) {
-    result.equity = Math.min(result.equity + 5, 90);
-    result.cash = Math.max(result.cash - 5, 0);
-    signals.push({
-      type: "bullish",
-      message: `Nifty P/E at ${niftyPE}x — attractive valuations. Potential accumulation zone.`,
-    });
-  } else {
-    signals.push({
-      type: "neutral",
-      message: `Nifty P/E at ${niftyPE}x — markets fairly valued. Continue SIPs.`,
-    });
+
+  let tacticalScore = 0;
+
+  if (Number.isFinite(marketData.niftyPE)) {
+    if (marketData.niftyPE >= 23) {
+      tacticalScore -= 2;
+      signals.push({
+        type: "warning",
+        message: `Nifty P/E at ${marketData.niftyPE}x — valuations are stretched.`,
+      });
+    } else if (marketData.niftyPE <= 18.5) {
+      tacticalScore += 2;
+      signals.push({
+        type: "bullish",
+        message: `Nifty P/E at ${marketData.niftyPE}x — valuations are supportive for risk.`,
+      });
+    } else {
+      signals.push({
+        type: "neutral",
+        message: `Nifty P/E at ${marketData.niftyPE}x — valuations are near fair value.`,
+      });
+    }
   }
-  if (marketData.niftyDrawdown && marketData.niftyDrawdown < -10) {
+
+  if (Number.isFinite(marketData.niftyVs30dAvgPct)) {
+    if (marketData.niftyVs30dAvgPct >= 4) {
+      tacticalScore -= 1;
+      signals.push({
+        type: "warning",
+        message: `Nifty is ${marketData.niftyVs30dAvgPct}% above its 30D average — market looks extended.`,
+      });
+    } else if (marketData.niftyVs30dAvgPct <= -4) {
+      tacticalScore += 1;
+      signals.push({
+        type: "opportunity",
+        message: `Nifty is ${Math.abs(marketData.niftyVs30dAvgPct)}% below its 30D average — correction may be creating value.`,
+      });
+    }
+  }
+
+  if (Number.isFinite(marketData.indiaVix)) {
+    if (
+      marketData.indiaVix >= 20 ||
+      (marketData.indiaVixVs30dAvgPct || 0) >= 15
+    ) {
+      tacticalScore -= 2;
+      signals.push({
+        type: "warning",
+        message: `India VIX at ${marketData.indiaVix} — volatility is elevated.`,
+      });
+    } else if (
+      marketData.indiaVix <= 14 &&
+      (marketData.indiaVixVs30dAvgPct || 0) <= -10
+    ) {
+      tacticalScore += 1;
+      signals.push({
+        type: "bullish",
+        message: `India VIX at ${marketData.indiaVix} — volatility has eased materially.`,
+      });
+    }
+  }
+
+  if (Number.isFinite(marketData.usdInrVs30dAvgPct)) {
+    if (marketData.usdInrVs30dAvgPct >= 1) {
+      tacticalScore -= 1;
+      signals.push({
+        type: "warning",
+        message: `USD/INR is ${marketData.usdInrVs30dAvgPct}% above its 30D average — INR pressure is a mild risk-off signal.`,
+      });
+    } else if (marketData.usdInrVs30dAvgPct <= -1) {
+      tacticalScore += 1;
+    }
+  }
+
+  if (Number.isFinite(marketData.goldVs30dAvgPct)) {
+    if (marketData.goldVs30dAvgPct >= 3) {
+      tacticalScore -= 1;
+      signals.push({
+        type: "warning",
+        message: `Gold is ${marketData.goldVs30dAvgPct}% above its 30D average — defensive demand is rising.`,
+      });
+    } else if (marketData.goldVs30dAvgPct <= -3) {
+      tacticalScore += 1;
+    }
+  }
+
+  if (Number.isFinite(marketData.breadthRatio)) {
+    if (marketData.breadthRatio <= -0.25) {
+      tacticalScore -= 1;
+      signals.push({
+        type: "warning",
+        message: "Market breadth is weak — declines are dominating advances.",
+      });
+    } else if (marketData.breadthRatio >= 0.25) {
+      tacticalScore += 1;
+      signals.push({
+        type: "bullish",
+        message: "Market breadth is healthy — advances are broad-based.",
+      });
+    }
+  }
+
+  if (Number.isFinite(marketData.niftyDrawdown) && marketData.niftyDrawdown <= -10) {
+    tacticalScore += 1;
     signals.push({
       type: "opportunity",
       message: `Nifty is ${Math.abs(marketData.niftyDrawdown).toFixed(
         1,
-      )}% below ATH — consider increasing equity SIP.`,
+      )}% below its 52W high — staggered buying improves risk/reward.`,
     });
   }
-  return { allocation: result, signals };
+
+  const shift = Math.min(Math.abs(tacticalScore) * 2, 8);
+
+  if (tacticalScore <= -2 && result.equity > 10) {
+    const equityReduction = Math.min(shift, result.equity - 10);
+    const debtAdd = Math.round(equityReduction * 0.5);
+    const goldAdd = Math.round(equityReduction * 0.3);
+    const cashAdd = equityReduction - debtAdd - goldAdd;
+
+    result.equity -= equityReduction;
+    result.debt += debtAdd;
+    result.gold += goldAdd;
+    result.cash += cashAdd;
+  } else if (tacticalScore >= 2) {
+    const equityIncrease = Math.min(shift, result.debt + result.cash + result.gold);
+    const takeFromCash = Math.min(result.cash, equityIncrease);
+    let remaining = equityIncrease - takeFromCash;
+    const takeFromDebt = Math.min(result.debt, remaining);
+    remaining -= takeFromDebt;
+    const takeFromGold = Math.min(result.gold, remaining);
+
+    result.cash -= takeFromCash;
+    result.debt -= takeFromDebt;
+    result.gold -= takeFromGold;
+    result.equity += takeFromCash + takeFromDebt + takeFromGold;
+  }
+
+  return {
+    allocation: normalizeAllocation(result),
+    signals: dedupeSignals(signals),
+    regimeScore: tacticalScore,
+  };
+}
+
+function normalizeAllocation(allocation) {
+  const normalized = { ...allocation };
+  const total =
+    normalized.equity + normalized.debt + normalized.gold + normalized.cash;
+
+  if (total === 100) return normalized;
+
+  normalized.debt += 100 - total;
+  return normalized;
+}
+
+function dedupeSignals(signals) {
+  const seen = new Set();
+  return signals.filter((signal) => {
+    const key = `${signal.type}:${signal.message}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 // ─── LAYER 2B: EQUITY SUB-ALLOCATION ─────────────────────────────────────────
