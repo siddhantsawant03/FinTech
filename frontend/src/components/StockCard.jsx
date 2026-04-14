@@ -25,30 +25,54 @@ const SECTOR_COLORS = {
 }
 
 export default function StockCard({ stock, liveQuote }) {
-  const ltp = liveQuote?.ltp || liveQuote?.close || null
+  const ltp = liveQuote?.ltp || liveQuote?.close || stock.ltp || null
   const open = liveQuote?.open || null
   const high52 = liveQuote?.fiftyTwoWeekHigh || null
   const low52  = liveQuote?.fiftyTwoWeekLow  || null
-  const change = ltp && open ? ltp - open : null
-  const changePct = change && open ? (change / open) * 100 : null
+  const change = ltp && open ? ltp - open : stock.change ?? null
+  const changePct = change && open ? (change / open) * 100 : stock.pChange ?? null
   const isPositive = change >= 0
 
   const sectorColor = SECTOR_COLORS[stock.sector] || '#888'
+  const convictionColor = stock.convictionColor || sectorColor
 
   return (
     <div className={styles.card}>
-      {/* Header */}
       <div className={styles.header}>
         <div>
           <div className={styles.symbol}>{stock.symbol}</div>
           <div className={styles.name}>{stock.name}</div>
         </div>
-        <div className={styles.sectorBadge} style={{ color: sectorColor, borderColor: sectorColor + '33', background: sectorColor + '11' }}>
-          {stock.sector}
-        </div>
+        {stock.aiScore !== undefined && (
+          <div className={styles.scoreBadge}>AI {stock.aiScore}</div>
+        )}
       </div>
 
-      {/* Price */}
+      <div className={styles.badges}>
+        <div
+          className={styles.sectorBadge}
+          style={{
+            color: sectorColor,
+            borderColor: sectorColor + '33',
+            background: sectorColor + '11',
+          }}
+        >
+          {stock.sector}
+        </div>
+        {stock.conviction && (
+          <div
+            className={styles.convictionBadge}
+            style={{
+              color: convictionColor,
+              borderColor: convictionColor + '33',
+              background: convictionColor + '12',
+            }}
+          >
+            {stock.conviction}
+          </div>
+        )}
+      </div>
+
       <div className={styles.priceRow}>
         <div className={styles.ltp}>
           {ltp ? `₹${ltp.toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '—'}
@@ -61,7 +85,24 @@ export default function StockCard({ stock, liveQuote }) {
         {!ltp && <div className={styles.noPrice}>Live price unavailable</div>}
       </div>
 
-      {/* 52w range */}
+      {(stock.portfolioWeight || stock.allocatedAmount || stock.conviction) && (
+        <div className={styles.insightGrid}>
+          <Insight
+            label="Target Weight"
+            value={stock.portfolioWeight ? `${stock.portfolioWeight.toFixed(1)}%` : '—'}
+          />
+          <Insight
+            label="Capital"
+            value={stock.allocatedAmount ? formatCurrency(stock.allocatedAmount) : '—'}
+          />
+          <Insight
+            label="Verdict"
+            value={stock.conviction || 'Screened'}
+            accent={convictionColor}
+          />
+        </div>
+      )}
+
       {high52 && low52 && ltp && (
         <div className={styles.rangeWrap}>
           <div className={styles.rangeLabel}>
@@ -79,7 +120,6 @@ export default function StockCard({ stock, liveQuote }) {
         </div>
       )}
 
-      {/* Fundamentals */}
       {stock.fundamentals && (
         <div className={styles.fundamentals}>
           <Metric label="D/E"  value={stock.fundamentals.debtToEquity} good={stock.fundamentals.debtToEquity < 1} />
@@ -89,10 +129,21 @@ export default function StockCard({ stock, liveQuote }) {
         </div>
       )}
 
-      {/* Why tag */}
-      <div className={styles.why}>
-        <span className={styles.whyIcon}>◎</span>
-        {getWhyText(stock)}
+      {stock.highlights?.length > 0 && (
+        <div className={styles.highlights}>
+          {stock.highlights.map((item) => (
+            <span key={item} className={styles.highlightChip}>
+              {item}
+            </span>
+          ))}
+        </div>
+      )}
+
+      <div className={styles.reasoning}>
+        <div className={styles.reasoningLabel}>Engine rationale</div>
+        <div className={styles.reasoningText}>
+          {stock.reasoning || getWhyText(stock)}
+        </div>
       </div>
 
       <div className={styles.disclaimer}>For consideration only — not a buy call</div>
@@ -107,6 +158,22 @@ function Metric({ label, value, good }) {
       <div className={`${styles.metricVal} ${good ? styles.metricGood : styles.metricNeutral}`}>{value}</div>
     </div>
   )
+}
+
+function Insight({ label, value, accent }) {
+  return (
+    <div className={styles.insight}>
+      <div className={styles.insightLabel}>{label}</div>
+      <div className={styles.insightValue} style={accent ? { color: accent } : undefined}>
+        {value}
+      </div>
+    </div>
+  )
+}
+
+function formatCurrency(value) {
+  if (!value && value !== 0) return '—'
+  return `₹${Number(value).toLocaleString('en-IN')}`
 }
 
 function getWhyText(stock) {

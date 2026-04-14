@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import { useStore } from "../store";
 import AllocationPie from "../components/AllocationPie";
 import StockCard from "../components/StockCard";
@@ -9,9 +9,7 @@ import RebalancingPanel from "../components/RebalancingPanel";
 import WhatIfSimulator from "../components/WhatIfSimulator";
 import RiskBadge from "../components/RiskBadge";
 import styles from "./DashboardPage.module.css";
-import toast from "react-hot-toast";
 
-// inside the component:
 const TABS = [
   { id: "overview", label: "Overview", icon: "◎" },
   { id: "stocks", label: "Stocks", icon: "📈" },
@@ -41,15 +39,10 @@ export default function DashboardPage() {
   const [tab, setTab] = useState("overview");
   const [liveQuotes, setLiveQuotes] = useState({});
 
-  const setStep = useStore((s) => s.goToStep);
-
-  <button onClick={() => setStep("market")}>📊 Market Dashboard</button>;
-
   useEffect(() => {
     fetchMarketPulse();
     const interval = setInterval(fetchMarketPulse, 60000);
     return () => clearInterval(interval);
-    <button onClick={() => setStep("market")}>📊 Market Dashboard</button>;
   }, []);
 
   // Fetch live quotes for recommended stocks
@@ -104,12 +97,23 @@ export default function DashboardPage() {
     debtSubAlloc,
   } = allocationResult;
 
-  const mfCategories = Object.entries(mfRecommendations || {});
   const allStocks = [
     ...(stocks?.recommended?.large || []),
     ...(stocks?.recommended?.mid || []),
     ...(stocks?.recommended?.small || []),
   ];
+  const mfCategories = Object.entries(mfRecommendations || {});
+  const aiSummary = stocks?.aiSummary;
+  const userWeightProfile =
+    stocks?.recommended?.summary?.userWeightProfile ||
+    allStocks.find((stock) => stock.weights)?.weights ||
+    null;
+  const factorWeights = userWeightProfile
+    ? Object.entries(userWeightProfile).sort(([, a], [, b]) => b - a)
+    : [];
+  const debtAllocation = Object.entries(debtSubAlloc || {}).filter(
+    ([, value]) => value > 0,
+  );
 
   return (
     <div className={styles.page}>
@@ -146,7 +150,7 @@ export default function DashboardPage() {
           <button className={styles.navBtn} onClick={() => goToStep("profile")}>
             ← Edit Profile
           </button>
-          <button className={styles.navBtn} onClick={() => setStep("market")}>
+          <button className={styles.navBtn} onClick={() => goToStep("market")}>
             📊 Market Pulse
           </button>
           <button className={styles.navBtn} onClick={logout}>
@@ -225,7 +229,14 @@ export default function DashboardPage() {
                     key: "equity",
                     label: "Equity",
                     color: "#d4af37",
-                    sub: `${equitySubAlloc.large}% Large · ${equitySubAlloc.mid}% Mid · ${equitySubAlloc.small}% Small`,
+                    sub: [
+                      `${equitySubAlloc.large}% Large`,
+                      `${equitySubAlloc.mid}% Mid`,
+                      `${equitySubAlloc.small}% Small`,
+                      equitySubAlloc.intl ? `${equitySubAlloc.intl}% Intl` : null,
+                    ]
+                      .filter(Boolean)
+                      .join(" · "),
                   },
                   {
                     key: "debt",
@@ -309,6 +320,85 @@ export default function DashboardPage() {
                     ok={financialHealth.emergencyFundStatus === "adequate"}
                   />
                 </div>
+              </div>
+
+              <div className={styles.logicCard}>
+                <h3 className={styles.cardTitle}>Decision Engine</h3>
+                <p className={styles.logicIntro}>
+                  The backend adjusts your recommendations using the quiz,
+                  debt load, goal, horizon, and income stability before any
+                  stock is ranked.
+                </p>
+                <div className={styles.logicStats}>
+                  <LogicStat
+                    label="Risk Score"
+                    value={`${risk.score}/100`}
+                    tone="gold"
+                  />
+                  <LogicStat
+                    label="Quiz Score"
+                    value={`${risk.psychometricScore}/100`}
+                    tone="blue"
+                  />
+                  <LogicStat
+                    label="Avg AI Score"
+                    value={
+                      aiSummary?.avgAIScore
+                        ? `${aiSummary.avgAIScore}/100`
+                        : "—"
+                    }
+                    tone="green"
+                  />
+                  <LogicStat
+                    label="Stocks Ranked"
+                    value={aiSummary?.totalRecommended ?? allStocks.length}
+                    tone="muted"
+                  />
+                </div>
+
+                {factorWeights.length > 0 && (
+                  <div className={styles.weightSection}>
+                    <div className={styles.weightTitle}>
+                      Personalised AI factor weights
+                    </div>
+                    <div className={styles.weightList}>
+                      {factorWeights.map(([factor, value]) => (
+                        <WeightBar
+                          key={factor}
+                          label={formatFactorLabel(factor)}
+                          value={value}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className={styles.debtCard}>
+                <h3 className={styles.cardTitle}>Debt Sleeve Logic</h3>
+                {allocation.debt > 0 ? (
+                  <>
+                    <p className={styles.logicIntro}>
+                      Your {allocation.debt}% debt allocation is split by the{" "}
+                      {profile.timeHorizon}-year horizon rather than evenly
+                      across categories.
+                    </p>
+                    <div className={styles.weightList}>
+                      {debtAllocation.map(([key, value]) => (
+                        <SplitBar
+                          key={key}
+                          label={formatDebtLabel(key)}
+                          value={value}
+                          color="#3b82f6"
+                        />
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <div className={styles.emptyLogic}>
+                    No debt sleeve was allocated for this profile.
+                  </div>
+                )}
               </div>
 
               {/* Quick projection */}
@@ -441,6 +531,59 @@ export default function DashboardPage() {
                   </div>
                 </div>
 
+                <div className={styles.aiSummaryCard}>
+                  <div className={styles.aiSummaryTop}>
+                    <div className={styles.aiSummaryBlock}>
+                      <span className={styles.aiSummaryLabel}>
+                        Strong Buys
+                      </span>
+                      <strong className={styles.aiSummaryValue}>
+                        {aiSummary?.strongBuys ?? 0}
+                      </strong>
+                    </div>
+                    <div className={styles.aiSummaryBlock}>
+                      <span className={styles.aiSummaryLabel}>Buys</span>
+                      <strong className={styles.aiSummaryValue}>
+                        {aiSummary?.buys ?? 0}
+                      </strong>
+                    </div>
+                    <div className={styles.aiSummaryBlock}>
+                      <span className={styles.aiSummaryLabel}>
+                        Avg AI Score
+                      </span>
+                      <strong className={styles.aiSummaryValue}>
+                        {aiSummary?.avgAIScore ?? "—"}
+                      </strong>
+                    </div>
+                    <div className={styles.aiSummaryBlock}>
+                      <span className={styles.aiSummaryLabel}>
+                        Equity Corpus
+                      </span>
+                      <strong className={styles.aiSummaryValue}>
+                        ₹{formatCrore(aiSummary?.equityCorpusAllocated)}
+                      </strong>
+                    </div>
+                  </div>
+
+                  <p className={styles.aiSummaryText}>
+                    Stocks are filtered, scored, then capital is
+                    conviction-weighted from the engine output instead of being
+                    displayed as generic picks.
+                  </p>
+
+                  {factorWeights.length > 0 && (
+                    <div className={styles.weightList}>
+                      {factorWeights.map(([factor, value]) => (
+                        <WeightBar
+                          key={`stocks-${factor}`}
+                          label={formatFactorLabel(factor)}
+                          value={value}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+
                 {["large", "mid", "small"].map((cap) => {
                   const list = stocks.recommended?.[cap] || [];
                   if (list.length === 0) return null;
@@ -547,6 +690,53 @@ export default function DashboardPage() {
   );
 }
 
+function LogicStat({ label, value, tone = "muted" }) {
+  return (
+    <div className={styles.logicStat}>
+      <span className={styles.logicStatLabel}>{label}</span>
+      <strong className={`${styles.logicStatValue} ${styles[`tone_${tone}`]}`}>
+        {value}
+      </strong>
+    </div>
+  );
+}
+
+function WeightBar({ label, value }) {
+  return (
+    <div className={styles.weightRow}>
+      <div className={styles.weightMeta}>
+        <span className={styles.weightLabel}>{label}</span>
+        <span className={styles.weightValue}>
+          {(value * 100).toFixed(1)}%
+        </span>
+      </div>
+      <div className={styles.weightTrack}>
+        <div
+          className={styles.weightFill}
+          style={{ width: `${Math.max(value * 100, 4)}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function SplitBar({ label, value, color }) {
+  return (
+    <div className={styles.weightRow}>
+      <div className={styles.weightMeta}>
+        <span className={styles.weightLabel}>{label}</span>
+        <span className={styles.weightValue}>{value}%</span>
+      </div>
+      <div className={styles.weightTrack}>
+        <div
+          className={styles.weightFill}
+          style={{ width: `${value}%`, background: color }}
+        />
+      </div>
+    </div>
+  );
+}
+
 function HealthMetric({ label, value, ok }) {
   return (
     <div className={styles.healthMetric}>
@@ -563,6 +753,28 @@ function formatCrore(val) {
   if (val >= 10000000) return `${(val / 10000000).toFixed(2)}Cr`;
   if (val >= 100000) return `${(val / 100000).toFixed(1)}L`;
   return val.toLocaleString("en-IN");
+}
+
+function formatFactorLabel(factor) {
+  const labels = {
+    value: "Value",
+    quality: "Quality",
+    growth: "Growth",
+    momentum: "Momentum",
+    income: "Income",
+    riskFit: "Risk Fit",
+  };
+  return labels[factor] || factor;
+}
+
+function formatDebtLabel(key) {
+  const labels = {
+    liquid: "Liquid Funds",
+    shortDuration: "Short Duration",
+    corporateBond: "Corporate Bond",
+    dynamicBond: "Dynamic Bond",
+  };
+  return labels[key] || key;
 }
 
 function formatCatName(cat) {

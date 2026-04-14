@@ -189,6 +189,124 @@
 .hmOk  { background: var(--green-dim); color: var(--green); }
 .hmBad { background: var(--red-dim);   color: var(--red); }
 
+/* Engine logic cards */
+.logicCard,
+.debtCard,
+.aiSummaryCard {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+}
+
+.logicIntro,
+.aiSummaryText {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.7;
+}
+
+.logicStats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.logicStat {
+  padding: 14px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.logicStatLabel {
+  display: block;
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+}
+
+.logicStatValue {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.tone_gold { color: var(--gold); }
+.tone_blue { color: var(--blue); }
+.tone_green { color: var(--green); }
+.tone_muted { color: var(--text-primary); }
+
+.weightSection {
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.weightTitle {
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.weightList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.weightRow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.weightMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.weightLabel {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.weightValue {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-primary);
+}
+
+.weightTrack {
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--bg-3);
+}
+
+.weightFill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(212,175,55,0.55), var(--gold));
+}
+
+.emptyLogic {
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
 /* Projection card */
 .projCard {
   background: var(--bg-card);
@@ -206,7 +324,7 @@
 }
 .projLabel { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
 .projValue { font-family: var(--font-mono); font-size: 18px; font-weight: 600; color: var(--text-primary); }
-.projBase .projValue { color: var(--gold); font-size: 22px; }
+.projBase { color: var(--gold); font-size: 22px; }
 .projCAGR { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
 .projInvested { font-size: 12px; color: var(--text-muted); text-align: center; }
 
@@ -232,6 +350,33 @@
 .tabSub { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
 .capLegend { display: flex; align-items: center; gap: 16px; font-size: 12px; color: var(--text-secondary); }
 .capDot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; }
+.aiSummaryTop {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.aiSummaryBlock {
+  padding: 14px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.aiSummaryLabel {
+  display: block;
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+}
+.aiSummaryValue {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--gold);
+}
 .capGroup { display: flex; flex-direction: column; gap: 16px; }
 .capGroupHeader { display: flex; align-items: center; gap: 10px; }
 .capGroupDot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
@@ -290,4 +435,10 @@
 @media (max-width: 900px) {
   .overview { grid-template-columns: 1fr; }
   .projScenarios { grid-template-columns: 1fr; }
+  .logicStats { grid-template-columns: 1fr; }
+  .aiSummaryTop { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 640px) {
+  .aiSummaryTop { grid-template-columns: 1fr; }
 }

@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react'
-import { useStore } from '../store'
+import api, { useStore } from '../store'
 import styles from './QuizPage.module.css'
 import toast from 'react-hot-toast'
-import axios from 'axios'
 
 export default function QuizPage() {
   const { setQuizAnswers, runAllocation, goToStep, isCalculating } = useStore(s => ({
@@ -19,7 +18,7 @@ export default function QuizPage() {
   const [animating, setAnimating] = useState(false)
 
   useEffect(() => {
-    axios.get('/api/allocation/questions')
+    api.get('/allocation/questions')
       .then(r => setQuestions(r.data))
       .catch(() => {
         // Fallback questions
