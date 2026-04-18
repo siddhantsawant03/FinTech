@@ -84,6 +84,8 @@ const cors = require("cors");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 const winston = require("winston");
+const fs = require("fs");
+const path = require("path");
 
 // Routes
 const smartapiRoutes = require("./routes/smartapi");
@@ -94,6 +96,12 @@ const dashboardRoutes = require("./routes/dashboard"); // ✅ require stays here
 
 const app = express(); // ✅ app is defined FIRST
 const PORT = process.env.PORT || 3001;
+const FRONTEND_DIST_DIR = path.resolve(__dirname, "../frontend/dist");
+const configuredOrigins = (process.env.CORS_ORIGINS || process.env.FRONTEND_URL || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+const enforceCorsOrigins = configuredOrigins.length > 0;
 
 // Logger
 const logger = winston.createLogger({
@@ -108,7 +116,21 @@ const logger = winston.createLogger({
 
 // Middleware
 app.use(helmet({ contentSecurityPolicy: false }));
-app.use(cors({ origin: ["http://localhost:5173", "http://localhost:3000"] }));
+app.use(
+  cors({
+    origin(origin, callback) {
+      if (
+        !origin ||
+        !enforceCorsOrigins ||
+        configuredOrigins.includes("*") ||
+        configuredOrigins.includes(origin)
+      ) {
+        return callback(null, true);
+      }
+      return callback(new Error(`CORS blocked for origin: ${origin}`));
+    },
+  }),
+);
 app.use(express.json({ limit: "10mb" }));
 
 // Rate limiting
@@ -141,6 +163,13 @@ app.get("/api/health", (req, res) => {
   });
 });
 
+if (fs.existsSync(FRONTEND_DIST_DIR)) {
+  app.use(express.static(FRONTEND_DIST_DIR));
+  app.get(/^\/(?!api).*/, (req, res) => {
+    res.sendFile(path.join(FRONTEND_DIST_DIR, "index.html"));
+  });
+}
+
 // Global error handler
 app.use((err, req, res, next) => {
   logger.error(err.stack);
@@ -151,8 +180,11 @@ app.use((err, req, res, next) => {
 
 app.listen(PORT, () => {
   logger.info(
-    `🚀 Wealth Allocator backend running on http://localhost:${PORT}`,
+    `🚀 Wealth Allocator backend running on port ${PORT}`,
   );
+  if (fs.existsSync(FRONTEND_DIST_DIR)) {
+    logger.info(`📦 Serving frontend build from ${FRONTEND_DIST_DIR}`);
+  }
 });
 
 module.exports = app;

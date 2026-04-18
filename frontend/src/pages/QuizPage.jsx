@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import api, { useStore } from '../store'
 import styles from './QuizPage.module.css'
 import toast from 'react-hot-toast'
+import { getErrorMessage } from '../utils/errorMessage'
 
 export default function QuizPage() {
   const { setQuizAnswers, runAllocation, goToStep, isCalculating } = useStore(s => ({
@@ -53,7 +54,7 @@ export default function QuizPage() {
         try {
           await runAllocation()
         } catch (err) {
-          toast.error(err.response?.data?.error || 'Allocation failed. Check backend connection.')
+          toast.error(getErrorMessage(err, 'Allocation failed. Check backend connection.'))
         }
       }
     }, 300)

@@ -8,6 +8,28 @@ const quotesCache = new NodeCache({ stdTTL: parseInt(process.env.CACHE_TTL_QUOTE
 const fundamentalsCache = new NodeCache({ stdTTL: parseInt(process.env.CACHE_TTL_FUNDAMENTALS) || 3600 });
 const indicesCache = new NodeCache({ stdTTL: parseInt(process.env.CACHE_TTL_INDICES) || 60 });
 
+function normalizeErrorMessage(errorValue, fallback = 'Request failed') {
+  if (!errorValue) return fallback;
+  if (typeof errorValue === 'string') return errorValue;
+  if (typeof errorValue === 'number' || typeof errorValue === 'boolean') {
+    return String(errorValue);
+  }
+  if (typeof errorValue === 'object') {
+    if (typeof errorValue.message === 'string') {
+      return errorValue.code
+        ? `${errorValue.code}: ${errorValue.message}`
+        : errorValue.message;
+    }
+    if (typeof errorValue.error === 'string') return errorValue.error;
+    try {
+      return JSON.stringify(errorValue);
+    } catch (_) {
+      return fallback;
+    }
+  }
+  return fallback;
+}
+
 class SmartAPIService {
   constructor() {
     this.sessions = new Map(); // clientId -> { token, feedToken, expiry }
@@ -46,9 +68,18 @@ class SmartAPIService {
         this.sessions.set(clientId, session);
         return { success: true, session };
       }
-      return { success: false, error: res.data.message || 'Login failed' };
+      return {
+        success: false,
+        error: normalizeErrorMessage(res.data.message, 'Login failed'),
+      };
     } catch (err) {
-      return { success: false, error: err.response?.data?.message || err.message };
+      return {
+        success: false,
+        error: normalizeErrorMessage(
+          err.response?.data?.message || err.response?.data?.error || err.message,
+          'Login failed',
+        ),
+      };
     }
   }
 

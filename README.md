@@ -56,6 +56,23 @@ npm run dev
 
 Then open: http://localhost:5173
 
+### Render deployment
+
+This repo is now set up to run on Render as a single Node web service:
+
+1. Set the Render root directory to the repo root.
+2. Use `npm run build` as the build command.
+3. Use `npm start` as the start command.
+4. Set the health check path to `/api/health`.
+5. Add the backend environment variables from `backend/.env.example` in Render.
+
+In this mode, Express serves `frontend/dist`, so the frontend should use relative `/api` calls. Do not set `VITE_API_URL` unless you are deploying the frontend and backend as separate Render services.
+
+If you do split them into separate services:
+
+- Set `frontend` env `VITE_API_URL=https://your-backend-service.onrender.com`
+- Set backend env `CORS_ORIGINS=https://your-frontend-service.onrender.com`
+
 ---
 
 ## Architecture

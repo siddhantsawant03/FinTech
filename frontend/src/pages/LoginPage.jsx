@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useStore } from '../store'
 import toast from 'react-hot-toast'
 import styles from './LoginPage.module.css'
+import { getErrorMessage } from '../utils/errorMessage'
 
 export default function LoginPage() {
   const login = useStore(s => s.login)
@@ -22,7 +23,7 @@ export default function LoginPage() {
       await login(form.clientId, form.password, form.totp)
       toast.success('Authenticated successfully')
     } catch (err) {
-      toast.error(err.response?.data?.error || 'Login failed. Check your credentials.')
+      toast.error(getErrorMessage(err, 'Login failed. Check your credentials.'))
     } finally {
       setLoading(false)
     }

@@ -330,6 +330,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useStore } from "../store";
 import api from "../store";
 import styles from "./MarketDashboardPage.module.css";
+import { getErrorMessage } from "../utils/errorMessage";
 
 // ── tiny sparkline (SVG) ─────────────────────────────────────────────────────
 function Sparkline({ data = [], color = "#00e5a0", height = 48, width = 140 }) {
@@ -656,7 +657,7 @@ export default function MarketDashboardPage() {
       setLastRefresh(new Date());
       setError(null);
     } catch (e) {
-      setError(e?.response?.data?.error || e.message);
+      setError(getErrorMessage(e, "Could not load market data."));
     } finally {
       setLoading(false);
     }
