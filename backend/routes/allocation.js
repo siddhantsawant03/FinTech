@@ -282,7 +282,6 @@ const express = require("express");
 const router = express.Router();
 const smartapi = require("../services/smartapi");
 const amfiService = require("../services/amfi");
-const dashboardService = require("../services/dashboardService");
 const {
   calculateRiskScore,
   getRiskBucket,
@@ -329,15 +328,14 @@ router.post("/run", async (req, res) => {
     // ── 1. Financial health
     const monthlyLiabilities = (monthlyExpenses || 0) + (monthlyEMI || 0);
     const netSurplus = monthlyIncome - monthlyLiabilities;
-    const debtToIncome = monthlyIncome > 0 ? monthlyEMI / monthlyIncome : 0;
+    const debtToIncome = monthlyEMI / monthlyIncome;
     const investableCorpus =
       (lumpsumAmount || 0) + (monthlySIP * timeHorizon * 12 || 0);
 
-    const savingsRate = monthlyIncome > 0 ? netSurplus / monthlyIncome : 0;
     const financialHealth = {
       netSurplus,
       debtToIncome: parseFloat(debtToIncome.toFixed(2)),
-      savingsRate: parseFloat(savingsRate.toFixed(2)),
+      savingsRate: parseFloat((netSurplus / monthlyIncome).toFixed(2)),
       emergencyFundStatus:
         emergencyFundMonths >= 6
           ? "adequate"
@@ -345,14 +343,10 @@ router.post("/run", async (req, res) => {
           ? "partial"
           : "insufficient",
       healthScore: computeHealthScore(
-        {
-          debtToIncome,
-          netSurplus,
-          monthlyIncome,
-          monthlySIP,
-          emergencyFundMonths,
-          savingsRate,
-        },
+        debtToIncome,
+        netSurplus,
+        monthlyIncome,
+        emergencyFundMonths,
       ),
     };
 
@@ -381,14 +375,14 @@ router.post("/run", async (req, res) => {
 
     // ── 5. Tactical overlay — use live Nifty data
     let marketSignals = [];
-    let macroData = null;
+    let niftyData = null;
     if (token) {
       try {
-        const marketSnapshot = await dashboardService.getAllMarketData(token);
-        macroData = buildAllocationMacroContext(marketSnapshot);
+        const indices = await smartapi.getIndices(token);
+        niftyData = parseIndicesLive(indices);
       } catch (_) {}
     }
-    const tacticalResult = applyTacticalOverlay(allocation, macroData);
+    const tacticalResult = applyTacticalOverlay(allocation, niftyData);
     allocation = tacticalResult.allocation;
     marketSignals = tacticalResult.signals;
 
@@ -408,7 +402,7 @@ router.post("/run", async (req, res) => {
       debtToIncome: parseFloat(debtToIncome.toFixed(2)),
       netSurplus,
       monthlyIncome,
-      savingsRate: parseFloat(savingsRate.toFixed(2)),
+      savingsRate: parseFloat((netSurplus / monthlyIncome).toFixed(2)),
       psychometricScore,
       riskScore,
     };
@@ -481,8 +475,7 @@ router.post("/run", async (req, res) => {
       equitySubAlloc: EQUITY_SUB_ALLOCATION[riskBucket],
       debtSubAlloc,
       marketSignals,
-      niftyData: macroData,
-      macroData,
+      niftyData,
       stocks: {
         eligible: lumpsumAmount >= 500000,
         recommended: aiScreened,
@@ -537,73 +530,16 @@ const BUCKET_LABELS = {
   very_aggressive: "Very Aggressive",
 };
 
-function computeHealthScore({
-  debtToIncome,
-  netSurplus,
-  monthlyIncome,
-  monthlySIP,
-  emergencyFundMonths,
-  savingsRate,
-}) {
-  const dtiScore =
-    debtToIncome <= 0.1
-      ? 100
-      : debtToIncome <= 0.2
-      ? 85
-      : debtToIncome <= 0.3
-      ? 65
-      : debtToIncome <= 0.4
-      ? 45
-      : debtToIncome <= 0.5
-      ? 25
-      : 10;
-
-  const savingsScore =
-    savingsRate >= 0.35
-      ? 100
-      : savingsRate >= 0.25
-      ? 85
-      : savingsRate >= 0.15
-      ? 65
-      : savingsRate >= 0.05
-      ? 45
-      : savingsRate > 0
-      ? 25
-      : 0;
-
-  const emergencyScore =
-    emergencyFundMonths >= 12
-      ? 100
-      : emergencyFundMonths >= 6
-      ? 85
-      : emergencyFundMonths >= 3
-      ? 65
-      : emergencyFundMonths >= 1
-      ? 40
-      : 10;
-
-  const sipRate = monthlyIncome > 0 ? monthlySIP / monthlyIncome : 0;
-  const sipScore =
-    sipRate >= 0.25
-      ? 100
-      : sipRate >= 0.15
-      ? 80
-      : sipRate >= 0.1
-      ? 60
-      : sipRate >= 0.05
-      ? 40
-      : sipRate > 0
-      ? 25
-      : 10;
-
-  const score =
-    dtiScore * 0.35 +
-    savingsScore * 0.3 +
-    emergencyScore * 0.2 +
-    sipScore * 0.15;
-
-  if (netSurplus < 0) return 0;
-  return Math.max(0, Math.min(100, Math.round(score)));
+function computeHealthScore(dti, surplus, income, emergency) {
+  let score = 100;
+  if (dti > 0.5) score -= 40;
+  else if (dti > 0.4) score -= 25;
+  else if (dti > 0.3) score -= 10;
+  if (surplus < 0) score -= 30;
+  else if (surplus < income * 0.1) score -= 15;
+  if (emergency < 1) score -= 20;
+  else if (emergency < 3) score -= 10;
+  return Math.max(0, score);
 }
 
 function getOverrides(age, emergency, dti, horizon) {
@@ -666,37 +602,42 @@ async function enrichStocksWithLiveQuotes(token, bucket) {
 }
 
 /**
- * Normalize the market dashboard snapshot into the tactical overlay inputs used
- * by the allocator so allocation shifts are driven by the same macro feed shown
- * on the market page.
+ * FIX: Correct Nifty P/E calculation using live LTP.
+ *
+ * Nifty 50 trailing 12M EPS — update this each quarter from NSE/Motilal factsheet.
+ * As of Q3 FY2025-26 (Jan-Mar 2026), consolidated Nifty 50 EPS ≈ ₹1,020
+ * Source: NSE India Nifty factsheet / Motilal Oswal market outlook
+ *
+ * Nifty ATH as of April 2026: ~24,198 (Oct 2024 high; market corrected since)
+ * Current Nifty range: ~22,500–23,500
  */
-function buildAllocationMacroContext(marketSnapshot) {
-  if (!marketSnapshot) return null;
+function parseIndicesLive(indices) {
+  if (!indices || indices.length === 0) return null;
+
+  const nifty = indices.find((q) => q.symbolToken === "99926000") || indices[0];
+  const ltp = nifty?.ltp;
+
+  // ── Trailing 12M EPS for Nifty 50
+  // Update this quarterly. Formula: Nifty LTP / P/E = EPS
+  // Cross-check at: https://nseindia.com/reports/indices-pe-pb-dividend-yield
+  const NIFTY_TRAILING_EPS = 1020; // Q3 FY26 estimate
+
+  const niftyPE = ltp
+    ? parseFloat((ltp / NIFTY_TRAILING_EPS).toFixed(2))
+    : 21.5; // fallback if live price unavailable
+
+  // Nifty ATH: 26,277 (Sep 2024). As of Apr 2026 market ~22,500-23,500
+  const NIFTY_ATH = 26277;
+  const niftyDrawdown = ltp
+    ? parseFloat((((ltp - NIFTY_ATH) / NIFTY_ATH) * 100).toFixed(2))
+    : -12.5;
 
   return {
-    niftyPE: toNumber(marketSnapshot.indices?.nifty?.niftyPE),
-    niftyDrawdown: toNumber(
-      marketSnapshot.indices?.nifty?.drawdownFromYearHighPct,
-    ),
-    niftyVs30dAvgPct: toNumber(marketSnapshot.indices?.nifty?.vs30dAvgPct),
-    indiaVix: toNumber(marketSnapshot.volatility?.indiaVix?.ltp),
-    indiaVixVs30dAvgPct: toNumber(
-      marketSnapshot.volatility?.indiaVix?.vs30dAvgPct,
-    ),
-    usdInr: toNumber(marketSnapshot.usdInr?.rate),
-    usdInrVs30dAvgPct: toNumber(marketSnapshot.usdInr?.vs30dAvgPct),
-    goldPrice10g: toNumber(marketSnapshot.gold?.price10gInr),
-    goldVs30dAvgPct: toNumber(marketSnapshot.gold?.vs30dAvgPct),
-    breadthRatio: toNumber(marketSnapshot.breadth?.ratio),
-    macroScore: toNumber(marketSnapshot.macro?.score),
-    macroStance: marketSnapshot.macro?.stance || null,
-    macroDrivers: marketSnapshot.macro?.drivers || [],
+    niftyPE,
+    niftyDrawdown,
+    niftyLtp: ltp,
+    niftyEPS: NIFTY_TRAILING_EPS,
   };
-}
-
-function toNumber(value) {
-  const parsed = Number.parseFloat(value);
-  return Number.isFinite(parsed) ? parsed : null;
 }
 
 function computeCurrentAllocation(holdings) {
